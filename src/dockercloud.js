@@ -118,7 +118,6 @@ class DockerCloud {
   subscribe({ type, state, resourceUri }) {
     return new Promise((resolve) => {
       const subscribeFunction = (message) => {
-
         if (message.type === type &&
           message.state === state &&
           message.resource_uri.includes(resourceUri)) {
@@ -317,6 +316,37 @@ class DockerCloud {
   startService(service) {
     return new Promise((resolve, reject) => {
       this.appRequest.post(`/service/${service.uuid}/start/`, async (error, response, body) => {
+        if (error) return reject(error)
+        if (response.statusCode >= 300) return reject(body)
+
+        const actionId = this.extractUuid(response.headers['x-dockercloud-action-uri'])
+        const action = await this.findActionById(actionId)
+
+        return resolve(action)
+      })
+    })
+  }
+
+  stopService(service) {
+    return new Promise((resolve, reject) => {
+      this.appRequest.post(`/service/${service.uuid}/stop/`, async (error, response, body) => {
+        if (error) return reject(error)
+        if (response.statusCode >= 300) return reject(body)
+
+        const actionId = this.extractUuid(response.headers['x-dockercloud-action-uri'])
+        const action = await this.findActionById(actionId)
+
+        return resolve(action)
+      })
+    })
+  }
+
+  updateService(service, props) {
+    return new Promise((resolve, reject) => {
+      this.appRequest.patch({
+        url: `/service/${service.uuid}/`,
+        body: JSON.stringify(props),
+      }, async (error, response, body) => {
         if (error) return reject(error)
         if (response.statusCode >= 300) return reject(body)
 

@@ -196,6 +196,17 @@ await dockerCloud.createService({
 })
 ```
 
+#### updateService
+
+Update an existing service
+
+```js
+const service = await dockerCloud.findServiceById('uuid')
+await dockerCloud.updateService(service,{
+  ... same as createService ...
+})
+```
+
 #### removeService
 
 Remove a service; the parameter is the service object.
@@ -212,6 +223,15 @@ Start a service; the parameter is the service object.
 ```js
 const service = await dockerCloud.findServiceById('uuid')
 dockerCloud.startService(service)
+```
+
+#### stopService
+
+Stop a service; the parameter is the service object.
+
+```js
+const service = await dockerCloud.findServiceById('uuid')
+dockerCloud.stopService(service)
 ```
 
 #### redeployService
