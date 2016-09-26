@@ -383,6 +383,44 @@ class DockerCloud {
     })
   }
 
+  waitUntilServiceIsStopped(service) {
+    return new Promise((resolve) => {
+      if (service.state === STATES.STOPPED) return resolve()
+
+      return Promise.race([
+        // Subscribe to the websocket to get warned when the service is stopped
+        this.subscribe({
+          type: EVENT_TYPES.CONTAINER,
+          state: STATES.STOPPED,
+          resourceUri: service.uuid,
+        }),
+        // Sometimes the websocket miss some message, check periodically if the service is stopped
+        this.checkPeriodically('findServiceById', service.uuid, {
+          state: STATES.STOPPED,
+        }, this.checkInterval),
+      ]).then(resolve)
+    })
+  }
+
+  waitUntilServiceIsRunning(service) {
+    return new Promise((resolve) => {
+      if (service.state === STATES.RUNNING) return resolve()
+
+      return Promise.race([
+        // Subscribe to the websocket to get warned when the service is stopped
+        this.subscribe({
+          type: EVENT_TYPES.CONTAINER,
+          state: STATES.RUNNING,
+          resourceUri: service.uuid,
+        }),
+        // Sometimes the websocket miss some message, check periodically if the service is stopped
+        this.checkPeriodically('findServiceById', service.uuid, {
+          state: STATES.RUNNING,
+        }, this.checkInterval),
+      ]).then(resolve)
+    })
+  }
+
   getServiceContainers(service) {
     const promises = service.containers.map(container => {
       const tokens = container.split('/')
