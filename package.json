@@ -1,6 +1,6 @@
 {
   "name": "@redant/dockercloud",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "Node.js library for Docker Cloud API",
   "main": "lib/dockercloud.js",
   "scripts": {
