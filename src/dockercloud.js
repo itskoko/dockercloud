@@ -396,15 +396,44 @@ class DockerCloud {
     })
   }
 
+  checkPeriodically(action, uuid, until, interval) {
+    return new Promise((resolve) => {
+      const checkStatus = async () => {
+        const currentStatus = await this[action](uuid)
+        let waitedStatus = true
+        for (const key in until) {
+          if (until.hasOwnProperty(key)) {
+            if (!currentStatus.hasOwnProperty(key) || currentStatus[key] !== until[key]) {
+              waitedStatus = false
+              break
+            }
+          }
+        }
+        if (waitedStatus) {
+          return resolve()
+        }
+        return setTimeout(checkStatus, interval)
+      }
+      checkStatus()
+    })
+  }
+
   waitUntilContainerIsStopped(container) {
     return new Promise((resolve) => {
       if (container.state === STATES.STOPPED) return resolve()
 
-      return this.subscribe({
-        type: EVENT_TYPES.CONTAINER,
-        state: STATES.STOPPED,
-        resourceUri: container.uuid,
-      }).then(resolve)
+      return Promise.race([
+        // Subscribe to the websocket to get warned when the container is stopped
+        this.subscribe({
+          type: EVENT_TYPES.CONTAINER,
+          state: STATES.STOPPED,
+          resourceUri: container.uuid,
+        }),
+        // Sometimes the websocket miss some message, check periodically if the container is stopped
+        this.checkPeriodically('findContainerById', container.uuid, {
+          state: STATES.STOPPED,
+        }, 5000),
+      ]).then(resolve)
     })
   }
 
